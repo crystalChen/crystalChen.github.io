@@ -2,6 +2,8 @@
 layout: default
 title: Java 内存模型
 ---
+<h2>{{ page.title }}</h2>
+<p>{{ page.date | date_to_string }}</p>
 
 阻碍并发的两个障碍：
 1.指令重排
@@ -128,6 +130,12 @@ volatile数组中的每个元素是否实时可见？ 否
 volatile AtomicIntegerArray a;
 
 
+final：
+final变量设置初始值后不能修改，设置可以是在定义的时候或者在构造器里面设置值。
+写final域的重排序规则禁止把final域的写重排序到构造函数之外。所以会先设值final变量，然后再返回构造器引用。
+JSR-133专家组增强了final的语义。通过为final域增加写和读重排序规则，可以为java程序员提供初始化安全保证：只要对象是正确构造的（被构造对象的引用在构造函数中没有“逸出”），那么不需要使用同步（指lock和volatile的使用），就可以保证任意线程都能看到这个final域在构造函数中被初始化之后的值。
+
+
 volatile和synchronized的区别
 1.volatile仅能使用在变量级别；
 synchronized则可以使用在变量 方法 和 类级别的
@@ -140,3 +148,4 @@ synchronized标记的变量可以被编译器优化
 
 相关资料：
 http://www.cs.umd.edu/~pugh/java/memoryModel/jsr133.pdf
+http://gee.cs.oswego.edu/dl/jmm/cookbook.html

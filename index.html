@@ -1,11 +1,97 @@
 ---
 layout: default
-title: 我的Blog
 ---
-<h2>{{ page.title }}</h2>
-<p>最新文章</p>
-<ul>
-	{% for post in site.posts %}
-	<li>{{ post.date | date_to_string }} <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
-	{% endfor %}
-</ul>
+<div id="index" class="row">
+  <div class="col-sm-9">
+    <div class="post-area">
+      <!-- small button -->
+     <!--  <p class="pull-right visible-xs">
+       <button>toggle</button>
+     </p> -->
+      <div class="post-list-header">
+        博客目录
+      </div>
+      <div class="post-list-body">
+        
+        <div class="all-posts" post-cate="All">
+          {% for post in site.posts %}
+            <a class="post-list-item" href="{{ post.url | prepend: site.baseurl }}">
+              <h2>
+              {{ post.title }}
+              </h2>
+              <span class="">{{ post.date | date: "%b %-d, %Y" }}</span>
+            </a>
+          {% endfor %}
+           <!-- 分页 -->
+                    <div class="paginator">
+                        <ul class="pager">
+                            {% if paginator.total_pages > 1 %}
+                            {% if paginator.previous_page %}
+                            <li class="previous disabled"><a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/'   }}">&larr; Older</a></li>
+                            {% endif %}
+                            
+                            {% if paginator.next_page %}
+                            <li class="next"><a href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/'   }}">Newer &rarr;</a></li>
+                            {% endif %}
+                            {% endif %}
+                        </ul>
+                    </div>
+
+        </div>
+        <!-- <div class="posts-in-categories"> -->
+        {% for category in site.categories %}
+          <div post-cate="{{category | first}}">
+            {% for posts in category  %}
+              {% for post in posts %}
+                {% if post.url %}
+                  <a href="{{ post.url }}" class="post-list-item">
+                    <h2>
+                    {{ post.title }}
+                    </h2>
+                    <span class="">{{ post.date | date: "%b %-d, %Y" }}</span>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+        
+        <!-- </div> -->
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+  <div id="myAffix" class="shadow-bottom-center hidden-xs" >
+      <div class="categories-list-header" align="center">
+        支持我请点击右上角的
+        <a href="https://github.com/linhao007"><button class="btn btn-sm btn-primary js-toggler-target" title="Follow linhao007">Follow</button> </a>
+      </div>
+    <!--  <div class="content-text"></div> -->
+    </div>
+
+    <p>
+    </p>
+
+    <div class="shadow-corner-curl hidden-xs">
+      <div class="categories-list-header">
+        博客类别
+      </div>
+      
+      <a href="javascript:;" class="categories-list-item" cate="All">
+        全部<span class="my-badge"> {{site.categories | size}}</span>
+      </a>
+      {% for category in site.categories %}
+        <a href="javascript:;" class="categories-list-item" cate="{{ category | first }}">
+          {{ category | first }} <span class="my-badge">{{ category | last | size }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+   <div class="col-sm-3" style="float : right; margin-top : 20px;">
+        <div class="shadow-corner-curl hidden-xs">
+           <iframe width="100%" height="550" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=1&speed=0&skin=1&isTitle=1&noborder=1&isWeibo=1&isFans=1&uid=3162317635&verifier=b5e68bf1&dpc=1"></iframe>
+        </div>                                          
+    </div>
+
+</div>
