@@ -1,3 +1,5 @@
 # About
 
-blog
+my blog.  
+<http://crystalchen.github.io>
+
