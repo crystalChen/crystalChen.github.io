@@ -1,11 +1,12 @@
-
-
 ---
 layout: default
 title: Java之CountDownLatch类使用
 ---
 <h2>{{ page.title }}</h2>
 <p>{{ page.date | date_to_string }}</p>
+
+
+
 
     上次想做爬虫，遇到问题在stackoverflow搜索的时候发现了CountDownLatch，之前没有接触过，于是去了解了一下，知道了这是一个倒计数锁。  
       
@@ -39,43 +40,5 @@ CLH锁是一种基于链表的可扩展、高性能、公平的自旋锁，申�
 LockSupport实际上是调用了Unsafe类里的函数，归结到Unsafe里，只有两个函数：  
 public native void unpark(Thread jthread);  
 public native void park(boolean isAbsolute, long time);  
-unpark函数可以先于park调用。比如线程B调用unpark函数（一次多次都是作一个标记,可以理解设置boolean值，并没有计数），当线程A调用park时，看到许可的标记，那么它会马上再继续运行。  
+unpark函数可以先于park调用。比如线程B调用unpark函数（一次多次都是作一个标记,可以理解设置boolean值），当线程A调用park时，看到许可的标记，那么它会马上再继续运行。  
 不同于notify只会唤醒一个线程，如果错误地有两个线程在同一个对象上wait等待，那么又悲剧了。而notifyAll是唤醒所有。 
-
-
-
-同步器背后的思想比较简单，通过acquire和release操作，acquire操作如下:
-   
-    while (synchronization state does not allow acquire) {  
-       enqueue current thread if not already queued;  
-       possibly block current thread;  
-    }  
-    dequeue current thread if it was queued;  
-
-release操作如下：
-  
-	update synchronization state;
-    if (state may permit a blocked thread to acquire)
-    unblock one or more queued threads;  
-    
-为了实现上述操作，需要下面三个基本组件的相互协作：
-
-同步状态的原子性管理；  
-线程的阻塞与解除阻塞；  
-队列的管理；  
-
-####1.同步状态
-AQS类使用一个int state来保存同步状态，并暴露出getState、setState以及compareAndSet操作来读取和更新这个状态。1.6版本有long型的AbstractQueuedLongSynchronizer。
-
-####2.线程的阻塞与解除阻塞
-
-j.u.c包有一个LockSuport类，AQS用到了LockSupport类的park()和unpark()。park方法和unpark方法不用竞争两者的先后顺序，而以前的Thread提供的Thread.suspend和Thread.resume方法需要注意顺序：当一个非阻塞的线程在一个正准备阻塞的线程调用suspend前调用了resume，这个resume操作将不会有什么效果。
-
-####3.队列
-AQS关键就是如何管理被阻塞的线程的队列，该队列是严格的FIFO队列，因此，框架不支持基于优先级的同步。  
-同步队列的最佳选择是自身没有使用底层锁来构造的非阻塞数据结构，主要有两种算法：一个是Mellor-Crummey和Scott锁（MCS锁），另一个是Craig，Landin和Hagersten锁（CLH锁）。传统的CLH锁是自旋锁，没有next指针，pred变量可以是一个局部变量。而AQS的的CLH锁是变种的，为了将CLH队列用于阻塞式同步器，需要做些额外的修改以提供一种高效的方式定位某个节点的后继节点。在自旋锁中，一个节点只需要改变其状态，下一次自旋中其后继节点就能注意到这个改变，所以节点间的链接并不是必须的。但在阻塞式同步器中，一个节点需要显式地唤醒（unpark）其后继节点，所以有next指针；第二个改变是对CLH队列主要的修改是将每个节点都有的状态字段用于控制阻塞而非自旋。
-
-参考资料：Doug Lea AQS paper:<http://gee.cs.oswego.edu/dl/papers/aqs.pdf>  
-Doug Lea AQS paper的译文:<http://ifeve.com/aqs-1/>
-        
-    
