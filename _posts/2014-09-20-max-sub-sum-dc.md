@@ -1,6 +1,6 @@
 ---
 layout: post
-categories: [code]
+categories: [算法]
 tags: [算法]
 code: true
 title: 求数组的子数组之和的最大值（分治法）
