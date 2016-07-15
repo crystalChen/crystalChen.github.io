@@ -3,81 +3,51 @@ layout: post
 categories: [算法]
 tags: [JMM]
 code: true
-title: LeetCode|Reverse Words in a String
+title: Maximum Product Subarray
 ---
 
-leetcode原题：  
+&emsp;&emsp;我上网查找资料的时候，看到一个东西，喜欢去查内个东西，然后发现和自己最初想查的东西越来越远，不过没关系，都是知识，而且无心插柳看到的知识面更广，好吧，然后昨天遇到了leetcode，其实早先看到过这个词，但是没去注册然后刷题目，昨天注册了，刷了题目，第一题如下：
 
 ```
-For example,  
-Given s = "the sky is blue",  
-return "blue is sky the".  
-
-Clarification:  
-What constitutes a word?  
-A sequence of non-space characters constitutes a word.  
-Could the input string contain leading or trailing spaces?  
-Yes. However, your reversed string should not contain leading or trailing spaces.  
-How about multiple spaces between two words?  
-Reduce them to a single space in the reversed string.  
+Find the contiguous subarray within an array (containing at least one number) which has the largest product.  
+For example, given the array [2,3,-2,4],  
+the contiguous subarray [2,3] has the largest product = 6.  
 ```
-此题也是九月26号晚上清华大学百度笔试第一大题，昨天晚上也木有调试出来，还是内个习惯，不雅一边听歌一边在电脑上写代码，今天晚饭后回来手写一便代码，思路清晰明了，解决了其中的bug。 
-主要思路是先将连续空白字符去除，用的是StringBuffer接收，因为append方法不会创建新的对象。然后全部反转整个句子，再把一个一个单词反转回来。代码如下： 
 
-``` 
-public class Solution {
-    public String reverseWords(String s) {
-        //去除连续重复的空格
-       StringBuffer str = new StringBuffer();
-       int i = 0;
-       while(i<s.length())
-       {
-           while(i<s.length() && s.charAt(i) != ' '  )
-           {
-               str.append(s.charAt(i));
-               i++;
-           }
-           str.append(" ");
-           while(i<s.length() && s.charAt(i) == ' ')
-           {
-               i++;
-           }
-       }
-        char[] a = str.toString().trim().toCharArray();
-        int j=a.length-1;
-        int k=0;
-        char temp=' ';
-        i = 0;
-        //reverse all the words
-        while(i<j){
-            temp = a[i];
-            a[i] = a[j];
-            a[j] = temp;
-            i++;
-            j--;
+&emsp;&emsp;这个和最大子数组之和的最大值很像，可是昨天晚上做了两三个钟头都没做出来，想了想，自己算法根基不太好吧，还一边听歌，看电影。。。太影响效率了，今天早上再战，当然是先看了《编程之美》。有了明确的思路，写起来就是快，代码如下：  
+
+```
+class Solution {
+public:
+    int maxProduct(int A[], int n) {
+        int start1[n]; 	//记录以A[i]开头的最大连续正整数乘积
+        int start2[n];	 //记录以A[i]开头的最小连续负整数乘积
+        int All[n];   	 //记录A[i]-A[n-1]之间的最大乘积
+        start1[n-1] = A[n-1];
+        start2[n-1] = A[n-1];
+        All[n-1] = A[n-1];
+        for(int i=n-2; i>=0; i--)
+        {
+            start1[i] = max(A[i], A[i]*start1[i+1], A[i]*start2[i+1]);
+            start2[i] = min(A[i], A[i]*start1[i+1], A[i]*start2[i+1]);
+            All[i] = start1[i] > All[i+1] ? start1[i] : All[i+1];
+            
         }
-        i = 0;
-        j = 0;
-        //reverse every word
-        while(i < a.length){   
-            //find the end char index of the word
-            while(j<a.length && a[j] != ' ')  j++;
-            k = j+1;    // remark the the first char of the next word 
-            j--;
-            //reverse the word
-            while(i<j){    
-                temp = a[i];
-                a[i] = a[j];
-                a[j] = temp;
-                i++;
-                j--;
-            }
-            i = k;
-            j = k;
-        }
-        
-       s = new String(a);
-        return s;
+        return All[0];
     }
-} 
+
+    int max(int a,int b,int c){
+        int max = a;
+        if(max<b) max = b;
+        if(max<c) max = c;
+        return max;
+    }
+    
+    int min(int a,int b,int c){
+        int min = a;
+        if(min>b) min = b;
+        if(min>c) min = c;
+        return min;
+    }
+};
 ```
