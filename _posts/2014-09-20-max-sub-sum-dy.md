@@ -50,7 +50,7 @@ int MaxSum(int* a,int size){
 	return max;
 }
 int main(){
-	int a[] = {	1,-2,3,5,-3,2};
+	int a[] = {1,-2,3,5,-3,2};
 	int max = MaxSum(a,6);
 	printf("%d\n",max);
 }
