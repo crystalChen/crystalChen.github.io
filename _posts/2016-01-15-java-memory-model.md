@@ -1,9 +1,11 @@
 ---
-layout: default
-title: Java 内存模型
+layout: post
+categories: [code]
+tags: [JMM]
+code: true
+title: Java内存模型
 ---
-<h2>{{ page.title }}</h2>
-<p>{{ page.date | date_to_string }}</p>
+
 
 阻碍并发的两个障碍：    
 ####1.指令重排
