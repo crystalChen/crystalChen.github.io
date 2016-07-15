@@ -20,9 +20,9 @@ the contiguous subarray [2,3] has the largest product = 6.
 class Solution {
 public:
     int maxProduct(int A[], int n) {
-        int start1[n]; 	//记录以A[i]开头的最大连续正整数乘积
-        int start2[n];	 //记录以A[i]开头的最小连续负整数乘积
-        int All[n];   	 //记录A[i]-A[n-1]之间的最大乘积
+        int start1[n];  //记录以A[i]开头的最大连续正整数乘积
+        int start2[n];   //记录以A[i]开头的最小连续负整数乘积
+        int All[n];      //记录A[i]-A[n-1]之间的最大乘积
         start1[n-1] = A[n-1];
         start2[n-1] = A[n-1];
         All[n-1] = A[n-1];
