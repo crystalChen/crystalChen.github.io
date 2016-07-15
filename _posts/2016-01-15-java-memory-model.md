@@ -1,6 +1,6 @@
 ---
 layout: post
-categories: [code]
+categories: [JMM]
 tags: [JMM]
 code: true
 title: Java内存模型
