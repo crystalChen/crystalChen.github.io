@@ -100,9 +100,9 @@ A线程写，B线程读，可以看见立即看见z的修改。若去除volatile
 对一个监视器的解锁happens-before每一个后续对同一个监视器的加锁。这里的监视器指的是synchronized关键字和java.uitl.concurrent.locks.Lock,他们都是具有happens-before特性的。  
 
 
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
         /**
          * Created by chen on 16/1/10.
          * 监视器
