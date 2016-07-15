@@ -22,18 +22,18 @@ API描述：
 2.CLH lock queue  
 3.LockSupport类的park()和unpark()  
 
-### 1.自旋锁(spinlock)  
+#### 1.自旋锁(spinlock)  
 自旋锁是指当一个线程尝试获取某个锁时，如果该锁已被其他线程占用，就一直循环检测锁是否被释放，而不是进入线程挂起或睡眠状态。
 自旋锁适用于锁保护的临界区很小的情况，临界区很小的话，锁占用的时间就很短。比方程序中一直访问某个变量的状态，如：while(state == true){...}
 
-### 2.CLH Lock Queue  
-CLH锁是一种基于链表的可扩展、高性能、公平的自旋锁，申请线程只在本地变量上自旋，它不断轮询前驱的状态，如果发现前驱释放了锁就结束自旋。CLH锁只有prev指针，没有next指针。CLH论文地址http://people.csail.mit.edu/shanir/publications/CLH.pdf。示意图：
+#### 2.CLH Lock Queue  
+CLH锁是一种基于链表的可扩展、高性能、公平的自旋锁，申请线程只在本地变量上自旋，它不断轮询前驱的状态，如果发现前驱释放了锁就结束自旋。CLH锁只有prev指针，没有next指针。[CLH论文地址](http://people.csail.mit.edu/shanir/publications/CLH.pdf)。示意图：
 
            +------+  prev +-----+       +-----+
       head |      | <---- |     | <---- |     |  tail
            +------+       +-----+       +-----+
 
-### 3.LockSupport类的park()和unpark()
+#### 3.LockSupport类的park()和unpark()
 LockSupport实际上是调用了Unsafe类里的函数，归结到Unsafe里，只有两个函数：  
 
 	public native void unpark(Thread jthread);        
@@ -41,3 +41,4 @@ LockSupport实际上是调用了Unsafe类里的函数，归结到Unsafe里，只
 
 unpark函数可以先于park调用。比如线程B调用unpark函数（一次多次都是作一个标记,可以理解设置boolean值），当线程A调用park时，看到许可的标记，那么它会马上再继续运行。  
 不同于notify只会唤醒一个线程，如果错误地有两个线程在同一个对象上wait等待，那么又悲剧了。而notifyAll是唤醒所有。 
+[Doug Lea的AQS论文地址](http://gee.cs.oswego.edu/dl/papers/aqs.pdf)
