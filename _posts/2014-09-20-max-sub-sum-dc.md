@@ -31,14 +31,14 @@ title: 求数组的子数组之和的最大值（分治法）
 				s2 += a[k];
 				if(s2 > max2) max2 = s2;
 			}
-			num3 = max1+max2;
+			num3 = max1 + max2;
 			int max = 0;
 			max = (num1>num2) ? num1:num2;
 			max = (num3>max) ? num3:max;
 			return max;
 		}
 		int main(){
-			int a[] = {1,-2,3,5,-3,2};
+			int a[] = { 1,-2,3,5,-3,2 };
 			int maxsum = MaxSum(a,0,5);
 			printf("%d\n",maxsum);
 		} 
