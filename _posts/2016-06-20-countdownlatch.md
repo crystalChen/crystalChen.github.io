@@ -33,6 +33,7 @@ CLH锁是一种基于链表的可扩展、高性能、公平的自旋锁，申�
       head |      | <---- |     | <---- |     |  tail
            +------+       +-----+       +-----+
 
+而AQS使用的是CLH的变种，不再是自旋，是阻塞的，同时为了唤醒后续的结点，提供了next指针。
 #### 3.LockSupport类的park()和unpark()
 LockSupport实际上是调用了Unsafe类里的函数，归结到Unsafe里，只有两个函数：  
 
@@ -40,5 +41,5 @@ LockSupport实际上是调用了Unsafe类里的函数，归结到Unsafe里，只
 	public native void park(boolean isAbsolute, long time);
 
 unpark函数可以先于park调用。比如线程B调用unpark函数（一次多次都是作一个标记,可以理解设置boolean值），当线程A调用park时，看到许可的标记，那么它会马上再继续运行。  
-不同于notify只会唤醒一个线程，如果错误地有两个线程在同一个对象上wait等待，那么又悲剧了。而notifyAll是唤醒所有。 
+不同于notify只会唤醒一个线程，如果错误地有两个线程在同一个对象上wait等待，那么又悲剧了。而notifyAll是唤醒所有。  
 [Doug Lea的AQS论文地址](http://gee.cs.oswego.edu/dl/papers/aqs.pdf)
