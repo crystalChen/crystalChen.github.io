@@ -1,7 +1,7 @@
 ---
 layout: post
-categories: [Java]
-tags: [Java]
+categories: [设计模式]
+tags: [设计模式]
 code: true
 title: 多个构造器参数考虑用Builder模式
 ---
