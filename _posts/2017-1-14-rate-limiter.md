@@ -6,16 +6,17 @@ code: true
 title: 限流方案的设计
 ---
 
-        有些场景，比如秒杀、写服务和特别频繁复杂的查询，系统可能扛不住，需要一种手段控制并发/请求量，就是限流，限流也叫流量整形（Traffic Shaping），是一种主动调整流量输出速率的措施，当请求过多的时候可以采取直接拒绝服务或者阻塞的形式来对付。在2016年10月份看了很多资料，写了一个小项目在这个github上，现在重新整理成笔记好日后查阅。
+　　有些场景，比如秒杀、写服务和特别频繁复杂的查询，系统可能扛不住，需要一种手段控制并发/请求量，即限流，限流也叫流量整形（Traffic Shaping），是一种主动调整流量输出速率的措施，当请求过多的时候可以采取直接拒绝服务或者阻塞的形式来对付。在2016年10月份看了很多资料，写了一个小项目在这个github上，现在重新整理所见所思好日后查阅。
 
 ### 算法介绍
 
 #### 1. 计数器法
-​        计数器法是指自然单位时间内统计次数，时间进入下一个单位时间则重置大小，重新计数。适用于不需要那么严格限流的场景。这个方法最简单有效，是项目中用的最多的了，比方一分钟内输入密码错误三次则要求输入验证码。
+​        
+　　计数器法是指自然单位时间内统计次数，时间进入下一个单位时间则重置大小，重新计数。适用于不需要那么严格限流的场景。这个方法最简单有效，是项目中用的最多的了，比方一分钟内输入密码错误三次则要求输入验证码。
 
 这里介绍一下Redis [*INCR*](http://doc.redisfans.com/string/incr.html#incr) 和Dubbo [TPSLimitFilter](https://github.com/alibaba/dubbo/blob/27917f2e86bbd97ee047d69817730a57bdf5ad6b/dubbo-rpc/dubbo-rpc-api/src/main/java/com/alibaba/dubbo/rpc/filter/tps/StatItem.java)
 
-Redis官方文档INCR命令：在这里也简单引用一下：典型用法是限制公开 API 的请求次数，以下是一个限速器实现示例，它将 API 的最大请求数限制在每个 IP 地址每秒钟十个之内：
+　　Redis官方文档INCR命令：在这里也简单引用一下：典型用法是限制公开 API 的请求次数，以下是一个限速器实现示例，它将 API 的最大请求数限制在每个 IP 地址每秒钟十个之内：
 
 ```  c
 FUNCTION LIMIT_API_CALL(ip)
@@ -34,7 +35,7 @@ END
    
 ```
 
-​        我看Redis中文文档中将原文“EXPIRE(keyname,10)”写成了“EXPIRE(keyname,1)”，我认为这两种写法在特殊场景下会造成限流结果的不同，因为多个JVM的机器的时钟可能会有细微差别（因为各个机器时钟的差别这种方式不能真正意义上的精确地控制每一秒的请求数量，因为时间戳是JVM所在机器提供的，不是Redis提供，而且发送的时候还有网络延时。当然，计数器法本就是用于不严格限流的场景），而且上述代码时间戳的获得和GET命令的时间可能不是同一秒，可能GET了上一秒的结果，而上一秒如果是跑的最快的那个机器在那秒的开始了执行了“EXPIRE(keyname,1)”，这时候最慢的那台机器去获得的是这个key过期了，再次执行事务会该key会从1开始重新计算，而如果这一秒超过了最大请求次数，显然按照英文文档的做法是不允许通过，而中文文档该key刚好过期了是可以通过的。这里用了事务打包来避免引入竞争条件，还有不用事务的方式：
+​　　我看Redis中文文档中将原文“EXPIRE(keyname,10)”写成了“EXPIRE(keyname,1)”，我认为这两种写法在特殊场景下会造成限流结果的不同，因为多个JVM的机器的时钟可能会有细微差别（因为各个机器时钟的差别这种方式不能真正意义上的精确地控制每一秒的请求数量，因为时间戳是JVM所在机器提供的，不是Redis提供，而且发送的时候还有网络延时。当然，计数器法本就是用于不严格限流的场景），而且上述代码时间戳的获得和GET命令的时间可能不是同一秒，可能GET了上一秒的结果，而上一秒如果是跑的最快的那个机器在那秒的开始了执行了“EXPIRE(keyname,1)”，这时候最慢的那台机器去获得的是这个key过期了，再次执行事务会该key会从1开始重新计算，而如果这一秒超过了最大请求次数，显然按照英文文档的做法是不允许通过，而中文文档该key刚好过期了是可以通过的。这里用了事务打包来避免引入竞争条件，还有不用事务的方式：
 
 ```c
 FUNCTION LIMIT_API_CALL(ip):
@@ -50,7 +51,7 @@ ELSE
 END
 ```
 
-​        而作者认为在 [*INCR*](http://doc.redisfans.com/string/incr.html#incr) 和 [*EXPIRE*](http://doc.redisfans.com/key/expire.html#expire) 之间存在着一个竞争条件，假如客户端在执行 [*INCR*](http://doc.redisfans.com/string/incr.html#incr) 之后，因为某些原因(比如客户端失败)而忘记设置 [*EXPIRE*](http://doc.redisfans.com/key/expire.html#expire) 的话，那么这个计数器就会一直存在下去，造成每个用户只能访问 10 次，这就是个灾难，要消灭这个实现中的竞争条件，我们可以将它转化为一个 Lua 脚本，并放到 Redis 中运行(这个方法仅限于 Redis 2.6 及以上的版本)：
+​　　而作者认为在 [*INCR*](http://doc.redisfans.com/string/incr.html#incr) 和 [*EXPIRE*](http://doc.redisfans.com/key/expire.html#expire) 之间存在着一个竞争条件，假如客户端在执行 [*INCR*](http://doc.redisfans.com/string/incr.html#incr) 之后，因为某些原因(比如客户端失败)而忘记设置 [*EXPIRE*](http://doc.redisfans.com/key/expire.html#expire) 的话，那么这个计数器就会一直存在下去，造成每个用户只能访问 10 次，这就是个灾难，要消灭这个实现中的竞争条件，我们可以将它转化为一个 Lua 脚本，并放到 Redis 中运行(这个方法仅限于 Redis 2.6 及以上的版本)：
 
 ```C
 local current
@@ -131,7 +132,7 @@ class StatItem {
 
 #### 2. 滑动窗口
 
-​        滑动窗口（Sliding window）是一种[流量控制](http://baike.baidu.com/view/190232.htm)技术。TCP网络协议用的就是这种算法，上述讲的计数器法有一个明显的问题，就是因为用的自然单位间隔时间，如果在第一分钟的附近集中大量请求，本来应该限流的，但是被分配到了前后两个时间单元，没有限流，这样有些不精确。所以介绍滑动窗口可以解决这个问题，copy过来一张图片：
+​　　滑动窗口（Sliding window）是一种[流量控制](http://baike.baidu.com/view/190232.htm)技术。TCP网络协议用的就是这种算法，上述讲的计数器法有一个明显的问题，就是因为用的自然单位间隔时间，如果在第一分钟的附近集中大量请求，本来应该限流的，但是被分配到了前后两个时间单元，没有限流，这样有些不精确。所以介绍滑动窗口可以解决这个问题，copy过来一张图片：
 
 ![](http://i1.piimg.com/567571/c13aad6c92a28892.png)
 
@@ -142,7 +143,7 @@ class StatItem {
 
 #### 3. 队列法
 
-​        在计数器法介绍的一分钟内输入三次就出验证码的例子是我当时在优酷土豆实习的时候遇到的，当时想，这个一分钟其实是自然时钟的分钟了，有没有其他方法可以控制成任意时间间隔的一分钟呢，当时借了同事一本马踏飞燕封面的《Redis入门指南》，看到了用队列解决这个问题：
+​　　在计数器法介绍的一分钟内输入三次就出验证码的例子是我当时在优酷土豆实习的时候遇到的，当时想，这个一分钟其实是自然时钟的分钟了，有没有其他方法可以控制成任意时间间隔的一分钟呢，当时借了同事一本马踏飞燕封面的《Redis入门指南》，看到了用队列解决这个问题：
 
 ```lua
         listLength = LLEN rate.limiting:IP
@@ -164,7 +165,7 @@ class StatItem {
 
 #### 4. 漏桶算法
 
-​    漏桶算法，也叫Leaky Bucket，是网络世界中[流量整形](http://baike.baidu.com/view/3344032.htm)（Traffic Shaping）或速率限制（Rate Limiting）时经常使用的一种算法，它的主要目的是控制数据注入到网络的速率，平滑网络上的突发流量。贴一张开涛画的图：
+​　　漏桶算法，也叫Leaky Bucket，是网络世界中[流量整形](http://baike.baidu.com/view/3344032.htm)（Traffic Shaping）或速率限制（Rate Limiting）时经常使用的一种算法，它的主要目的是控制数据注入到网络的速率，平滑网络上的突发流量。贴一张开涛画的图：
 
 ![漏桶](http://p1.bpimg.com/567571/a97718e1b9e8258f.png)
 
@@ -209,7 +210,7 @@ public class LeakyBucket {
 
 #### 5.令牌桶算法
 
-令牌桶也叫Token Bucket，系统按照一定速率往桶内放入token，如果桶满了直接丢弃，请求来了带走一个token直接走，无需等待。也是开涛的图：
+　　令牌桶也叫Token Bucket，系统按照一定速率往桶内放入token，如果桶满了直接丢弃，请求来了带走一个token直接走，无需等待。也是开涛的图：
 
 ![](http://i1.piimg.com/567571/8c55458e52f49589.png)
 
@@ -225,7 +226,7 @@ public class LeakyBucket {
 
 ### Guava RateLimiter
 
-Guava的RateLimiter是令牌桶的一种实现，我看的源码是Guava 16的，最新的版本写法上稍有不同。RateLimiter和上述算法比较需要注意的地方：
+　　Guava的RateLimiter是令牌桶的一种实现，我看的源码是Guava 16的，最新的版本写法上稍有不同。RateLimiter和上述算法比较需要注意的地方：
 
 1. 支持预支系统未来的token。请求的许可数从来不会影响到请求本身的限制（调用acquire(1) 和调用acquire(1000) 将得到相同的限制效果，如果存在这样的调用的话），但会影响下一次请求的限制，也就是说，如果一个高开销的任务抵达一个空闲的RateLimiter，它会被马上许可，但是下一个请求会经历额外的限制，从而来偿付高开销任务。
 2. 支持Bursty（突发）和WarmingUp（预热）两种形式；
@@ -286,7 +287,7 @@ availablePermitsAboveHalf > 0是要大于时间间隔获得permit的。说明war
 
 ### 实现的限流项目
 
-主要用Guava的RateLimiter作为基础来实现，提供了annotation方式和Json配置方式。annotation方式书写方便，Json配置方式可以放到服务配置中心，方便动态更新。
+　　主要用Guava的RateLimiter作为基础来实现，提供了annotation方式和Json配置方式。annotation方式书写方便，Json配置方式可以放到服务配置中心，方便动态更新。
 
 下面是注解方式提供的配置接口：
 
