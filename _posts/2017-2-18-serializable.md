@@ -18,7 +18,7 @@ title: 由增加一个类的属性对Java序列化的思考
 
 ​	晚上从公司回到房间，翻阅《Thinking in Java》，发现我知道的序列化只是冰山一角。Java对象序列化的出现主要的一个原因是为了RMI，Java对象序列化提供了几种方法：
 
-​	1.implements Serializable接口
+​	#### 1.implements Serializable接口
 
 实现Serializable接口即可，不需重写什么方法，这样就可以自动序列化。注意，如果不想让某个特定的字段被Java序列化自动保存与恢复。比方密码，即使是private修饰，序列化成字节后还是可以通过读取文件或者拦截网络传输被识别的。可以使用transient（瞬时）关键字关闭序列化。示例：
 
@@ -79,7 +79,7 @@ public class Logon implements Serializable {
 
 
 
-2.implements Externalizable接口
+#### 2.implements Externalizable接口
 
 Externalizable接口继承了Serializable接口，同时增添了两个方法：writeExternal()和readExternal()。这两个方法会在序列化和反序列化的过程中被自动调用，以便执行一些特殊操作。Externalizable不会自动序列化，需要那两个增添的方法里面写实现，控制空间比较大，不需要序列化的可以不写。注意到，实现Externalizable的类需必须要有public的无参数的构造方法，否则报InvalidClassException，因为在反序列化的时候会先调用默认构造器，然后再调用readExternal()。例如：
 
@@ -152,21 +152,33 @@ name:Julia, password:null, date:Sat Feb 25 22:07:37 CST 2017 age:20
 
 可以看到，这里序列化和反序列都是自己实现的，也没有序列化密码，而且对年龄做了简单加密处理。活动空间较大。
 
-3.XML
+#### 3.XML
+
 XML格式具有跨语言性。具体查看《Thinking in Java》
 
-4.Preferences
+#### 4.Preferences
+
 Preferences API可以自动存储和读取信息。不过受限于存储基本类型和字符串，并且字符串长度不超过8K。Preferences是一个K-V集合，类似Map。具体查看《Thinking in Java》
+
 
 
 #### 总结：
 1.实现对象序列化强烈建议声明private static final long serialVersionUID
+
 2.Serializable接口自动序列化和反序列化，用transient修饰的变量不参与
+
 3.Externalizable接口需要自己输出序列化和输入反序列化的字段
+
 4.被序列化的对象的属性都需要支持序列化
+
 5.Java序列化可以保持对象的"全景图"，能跟踪对象内所包含的所有引用，实现了深度复制。意味着对象A引用对象C，对象B引用同一个对象C，反序列也是引用同一个
+
 6.序列化多个对象的时候，注意"原子"操作进行序列化，可以将所有对象置入单一容器内，并在一个操作将该容器直接写出
+
 7.考虑各个版本序列化的时间和空间复杂度
+
 8.有些底层实现，注意各版本编译器是否兼容，比方要修改序列化类的版本
+
 9.需要迁移序列化的类，比方HashTable变成HashMap，网上有讨论
+
 10.序列化的字节是可以根据规范可读的。参见[Java的序列化](http://blog.csdn.net/silentbalanceyh/article/details/8183849)
