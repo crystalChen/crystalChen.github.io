@@ -12,9 +12,7 @@ title: 由增加一个类的属性对Java序列化的思考
 
 ​	首先feed_template表这个过程中只有查询，而且can_click字段默认值为0，所以即使有插入语句也没有；其次，先给MySQL增加了字段，程序select操作是无法感知的，因为程序的dao指明了select表的具体字段，所以Redis和Java里面都是原来的老数据；最后，在上线代码过程中，程序里面FeedTemplate类增加了属性，如果从Redis里面读取序列化的FeedTemplate对象反序列的话时候会不会有问题呢？如果第一个节点代码更新上线后，其他节点还没有更新，这个间隙中Redis刚好失效了，从MySQL里面读取了新的数据，更新到Redis当中，还未上线的节点反序列化会不会有问题呢？
 
-​	问题归根结底，就是Java对象新增或删除属性会不会对反序列化有影响。当时马上在项目上演练了一番，没有问题。然而，我觉得问题不像表面那么简单。立刻上网查找资料，[Java对象的序列化和反序列化](http://www.cnblogs.com/dubo-/p/5608641.html)
-
-一文中指出，是否声明serialVersionUID对于对象序列化的向上向下的兼容性有很大的影响。如果serialVersionUID去掉，序列化保存。反序列化的时候，增加或减少个字段，会报java.io.InvalidClassException。因为据Java API上描述，不显示定义serialVersionUID，Java会根据该类的各方面计算生成一个serialVersionUID，根据编译器实现的不同可能千差万别，这样在反序列化过程中可能会导致意外的 InvalidClassException。所以强烈建议显式声明serialVersionUID，并用private修饰。
+​	问题归根结底，就是Java对象新增或删除属性会不会对反序列化有影响。当时马上在项目上演练了一番，没有问题。然而，我觉得问题不像表面那么简单。立刻上网查找资料，[Java对象的序列化和反序列化](http://www.cnblogs.com/dubo-/p/5608641.html)一文中指出，是否声明serialVersionUID对于对象序列化的向上向下的兼容性有很大的影响。如果serialVersionUID去掉，序列化保存。反序列化的时候，增加或减少个字段，会报java.io.InvalidClassException。因为据Java API上描述，不显示定义serialVersionUID，Java会根据该类的各方面计算生成一个serialVersionUID，根据编译器实现的不同可能千差万别，这样在反序列化过程中可能会导致意外的 InvalidClassException。所以强烈建议显式声明serialVersionUID，并用private修饰。
 
 ​	晚上从公司回到房间，翻阅《Thinking in Java》，发现我知道的序列化只是冰山一角。Java对象序列化的出现主要的一个原因是为了RMI，Java对象序列化提供了几种方法：
 
@@ -165,7 +163,7 @@ Preferences API可以自动存储和读取信息。不过受限于存储基本�
 #### 总结：
 1.实现对象序列化强烈建议声明private static final long serialVersionUID
 
-2.Serializable接口自动序列化和反序列化，用transient修饰的变量不参与
+2.Serializable接口自动序列化和反序列化，用transient修饰的变量不s参与
 
 3.Externalizable接口需要自己输出序列化和输入反序列化的字段
 
