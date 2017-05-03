@@ -5,6 +5,7 @@ code: true
 title: 初识Kafka
 
 
+
 	最近因为公司业务增加，原来的ActiveMQ集群不稳定，生产者发送MQ到队列时经常报RequestTimedOutIOException超时异常。部分业务需要切Kafka。之前没有接触过Kafka，上周末看了下文档和问了几个同事后，周一上线，运行正常。
 
 	Kafka我们选用了0.10版本，先上代码：
