@@ -3,14 +3,13 @@ layout: post
 categories: [Redis]
 tags: [Redis]
 code: true
-title: 《Redis设计与实现》数据结构与对象笔记
+title: 《Redis设计与实现》简单动态字符串
 ---
 
 
 
 　　
 
-## 简单动态字符串
 
  	   Redis 没有直接使用 C 语言传统的字符串表示（以空字符结尾的字符数组，以下简称 C
 字符串），而是自己构建了一种名为简单动态字符串（simple dynamic string，SDS）的抽象
